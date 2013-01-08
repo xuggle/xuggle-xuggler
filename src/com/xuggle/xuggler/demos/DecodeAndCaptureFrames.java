@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2008, 2010 Xuggle Inc.  All rights reserved.
- *  
+ *
  * This file is part of Xuggle-Xuggler-Main.
  *
  * Xuggle-Xuggler-Main is free software: you can redistribute it and/or modify
@@ -50,11 +50,11 @@ public class DecodeAndCaptureFrames
 
   /** The number of nano-seconds between frames. */
 
-  public static final long NANO_SECONDS_BETWEEN_FRAMES = 
+  public static final long NANO_SECONDS_BETWEEN_FRAMES =
     (long)(Global.DEFAULT_PTS_PER_SECOND * SECONDS_BETWEEN_FRAMES);
-  
+
   /** Time of last frame write. */
-  
+
   private static long mLastPtsWrite = Global.NO_PTS;
 
   /** Write the video frame out to a PNG file every once and a while.
@@ -91,9 +91,9 @@ public class DecodeAndCaptureFrames
         double seconds = ((double)picture.getPts()) / Global.DEFAULT_PTS_PER_SECOND;
         System.out.printf("at elapsed time of %6.3f seconds wrote: %s\n",
           seconds, file);
-        
+
         // update last write time
-        
+
         mLastPtsWrite += NANO_SECONDS_BETWEEN_FRAMES;
       }
     }
@@ -108,7 +108,7 @@ public class DecodeAndCaptureFrames
    * reads through the file and captures video frames periodically as
    * specified by SECONDS_BETWEEN_FRAMES.  The frames are written as PNG
    * files into the system's temporary directory.
-   *  
+   *
    * @param args must contain one string which represents a filename
    */
 
@@ -126,7 +126,7 @@ public class DecodeAndCaptureFrames
     if (!IVideoResampler.isSupported(
         IVideoResampler.Feature.FEATURE_COLORSPACECONVERSION))
       throw new RuntimeException(
-        "you must install the GPL version of Xuggler (with IVideoResampler" + 
+        "you must install the GPL version of Xuggler (with IVideoResampler" +
         " support) for this demo to work");
 
     // create a Xuggler container object
@@ -193,69 +193,67 @@ public class DecodeAndCaptureFrames
     IPacket packet = IPacket.make();
     while(container.readNextPacket(packet) >= 0)
     {
-      
-      // Now we have a packet, let's see if it belongs to our video strea
 
-      if (packet.getStreamIndex() == videoStreamId)
-      {
-        // We allocate a new picture to get the data out of Xuggle
+      // Now we have a packet, let's see if it belongs to our video stream
 
-        IVideoPicture picture = IVideoPicture.make(videoCoder.getPixelType(),
-            videoCoder.getWidth(), videoCoder.getHeight());
-
-        int offset = 0;
-        while(offset < packet.getSize())
-        {
-          // Now, we decode the video, checking for any errors.
-
-          int bytesDecoded = videoCoder.decodeVideo(picture, packet, offset);
-          if (bytesDecoded < 0)
-            throw new RuntimeException("got error decoding video in: " + filename);
-          offset += bytesDecoded;
-          
-          // Some decoders will consume data in a packet, but will not
-          // be able to construct a full video picture yet.  Therefore
-          // you should always check if you got a complete picture from
-          // the decode.
-
-          if (picture.isComplete())
-          {
-            IVideoPicture newPic = picture;
-            
-            // If the resampler is not null, it means we didn't get the
-            // video in BGR24 format and need to convert it into BGR24
-            // format.
-
-            if (resampler != null)
-            {
-              // we must resample
-              newPic = IVideoPicture.make(
-                resampler.getOutputPixelFormat(), picture.getWidth(), 
-                picture.getHeight());
-              if (resampler.resample(newPic, picture) < 0)
-                throw new RuntimeException(
-                  "could not resample video from: " + filename);
-            }
-
-            if (newPic.getPixelType() != IPixelFormat.Type.BGR24)
-              throw new RuntimeException(
-                "could not decode video as BGR 24 bit data in: " + filename);
-
-            // convert the BGR24 to an Java buffered image
-
-            BufferedImage javaImage = Utils.videoPictureToImage(newPic);
-
-            // process the video frame
-
-            processFrame(newPic, javaImage);
-          }
-        }
-      }
-      else
+      if (packet.getStreamIndex() != videoStreamId)
       {
         // This packet isn't part of our video stream, so we just
         // silently drop it.
-        do {} while(false);
+        continue;
+      }
+
+      // We allocate a new picture to get the data out of Xuggle
+
+      IVideoPicture picture = IVideoPicture.make(videoCoder.getPixelType(),
+          videoCoder.getWidth(), videoCoder.getHeight());
+
+      int offset = 0;
+      while(offset < packet.getSize())
+      {
+        // Now, we decode the video, checking for any errors.
+
+        int bytesDecoded = videoCoder.decodeVideo(picture, packet, offset);
+        if (bytesDecoded < 0)
+          throw new RuntimeException("got error decoding video in: " + filename);
+        offset += bytesDecoded;
+
+        // Some decoders will consume data in a packet, but will not
+        // be able to construct a full video picture yet.  Therefore
+        // you should always check if you got a complete picture from
+        // the decode.
+
+        if (picture.isComplete())
+        {
+          IVideoPicture newPic = picture;
+
+          // If the resampler is not null, it means we didn't get the
+          // video in BGR24 format and need to convert it into BGR24
+          // format.
+
+          if (resampler != null)
+          {
+            // we must resample
+            newPic = IVideoPicture.make(
+              resampler.getOutputPixelFormat(), picture.getWidth(),
+              picture.getHeight());
+            if (resampler.resample(newPic, picture) < 0)
+              throw new RuntimeException(
+                "could not resample video from: " + filename);
+          }
+
+          if (newPic.getPixelType() != IPixelFormat.Type.BGR24)
+            throw new RuntimeException(
+              "could not decode video as BGR 24 bit data in: " + filename);
+
+          // convert the BGR24 to an Java buffered image
+
+          BufferedImage javaImage = Utils.videoPictureToImage(newPic);
+
+          // process the video frame
+
+          processFrame(newPic, javaImage);
+        }
       }
     }
 
@@ -263,16 +261,9 @@ public class DecodeAndCaptureFrames
     // by the garbage collector... but because we're nice people and
     // want to be invited places for Christmas, we're going to show how
     // to clean up.
-
-    if (videoCoder != null)
-    {
-      videoCoder.close();
-      videoCoder = null;
-    }
-    if (container !=null)
-    {
-      container.close();
-      container = null;
-    }
+    videoCoder.close();
+    videoCoder = null;
+    container.close();
+    container = null;
   }
 }

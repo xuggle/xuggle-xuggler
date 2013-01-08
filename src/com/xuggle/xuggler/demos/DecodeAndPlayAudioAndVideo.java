@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2008, 2010 Xuggle Inc.  All rights reserved.
- *  
+ *
  * This file is part of Xuggle-Xuggler-Main.
  *
  * Xuggle-Xuggler-Main is free software: you can redistribute it and/or modify
@@ -45,7 +45,7 @@ import com.xuggle.xuggler.Utils;
  * the audio and video will float in and out of slight sync.  Getting
  * time-stamps syncing-up with audio is very system dependent and left
  * as an exercise for the reader.
- * 
+ *
  * @author aclarke
  *
  */
@@ -59,19 +59,19 @@ public class DecodeAndPlayAudioAndVideo
 
   /**
    * The window we'll draw the video on.
-   * 
+   *
    */
   private static VideoImage mScreen = null;
 
   private static long mSystemVideoClockStartTime;
 
   private static long mFirstVideoTimestampInStream;
-  
+
   /**
    * Takes a media container (file) as the first argument, opens it,
    * plays audio as quickly as it can, and opens up a Swing window and displays
    * video frames with <i>roughly</i> the right timing.
-   *  
+   *
    * @param args Must contain one string which represents a filename
    */
   @SuppressWarnings("deprecation")
@@ -79,23 +79,23 @@ public class DecodeAndPlayAudioAndVideo
   {
     if (args.length <= 0)
       throw new IllegalArgumentException("must pass in a filename as the first argument");
-    
+
     String filename = args[0];
-    
+
     // Let's make sure that we can actually convert video pixel formats.
     if (!IVideoResampler.isSupported(IVideoResampler.Feature.FEATURE_COLORSPACECONVERSION))
       throw new RuntimeException("you must install the GPL version of Xuggler (with IVideoResampler support) for this demo to work");
-    
+
     // Create a Xuggler container object
     IContainer container = IContainer.make();
-    
+
     // Open up the container
     if (container.open(filename, IContainer.Type.READ, null) < 0)
       throw new IllegalArgumentException("could not open file: " + filename);
-    
+
     // query how many streams the call to open found
     int numStreams = container.getNumStreams();
-    
+
     // and iterate through the streams to find the first audio stream
     int videoStreamId = -1;
     IStreamCoder videoCoder = null;
@@ -107,7 +107,7 @@ public class DecodeAndPlayAudioAndVideo
       IStream stream = container.getStream(i);
       // Get the pre-configured decoder that can decode this stream;
       IStreamCoder coder = stream.getStreamCoder();
-      
+
       if (videoStreamId == -1 && coder.getCodecType() == ICodec.Type.CODEC_TYPE_VIDEO)
       {
         videoStreamId = i;
@@ -121,7 +121,7 @@ public class DecodeAndPlayAudioAndVideo
     }
     if (videoStreamId == -1 && audioStreamId == -1)
       throw new RuntimeException("could not find audio or video stream in container: "+filename);
-    
+
     /*
      * Check if we have a video stream in this file.  If so let's open up our decoder so it can
      * do work.
@@ -131,7 +131,7 @@ public class DecodeAndPlayAudioAndVideo
     {
       if(videoCoder.open() < 0)
         throw new RuntimeException("could not open audio decoder for container: "+filename);
-    
+
       if (videoCoder.getPixelType() != IPixelFormat.Type.BGR24)
       {
         // if this stream is not in BGR24, we're going to need to
@@ -146,12 +146,12 @@ public class DecodeAndPlayAudioAndVideo
        */
       openJavaVideo();
     }
-    
+
     if (audioCoder != null)
     {
       if (audioCoder.open() < 0)
         throw new RuntimeException("could not open audio decoder for container: "+filename);
-      
+
       /*
        * And once we have that, we ask the Java Sound System to get itself ready.
        */
@@ -164,8 +164,8 @@ public class DecodeAndPlayAudioAndVideo
         throw new RuntimeException("unable to open sound device on your system when playing back container: "+filename);
       }
     }
-    
-    
+
+
     /*
      * Now, we start walking through the container looking at each packet.
      */
@@ -184,10 +184,10 @@ public class DecodeAndPlayAudioAndVideo
          */
         IVideoPicture picture = IVideoPicture.make(videoCoder.getPixelType(),
             videoCoder.getWidth(), videoCoder.getHeight());
-        
+
         /*
          * Now, we decode the video, checking for any errors.
-         * 
+         *
          */
         int bytesDecoded = videoCoder.decodeVideo(picture, packet, 0);
         if (bytesDecoded < 0)
@@ -238,19 +238,19 @@ public class DecodeAndPlayAudioAndVideo
         /*
          * We allocate a set of samples with the same number of channels as the
          * coder tells us is in this buffer.
-         * 
+         *
          * We also pass in a buffer size (1024 in our example), although Xuggler
          * will probably allocate more space than just the 1024 (it's not important why).
          */
         IAudioSamples samples = IAudioSamples.make(1024, audioCoder.getChannels());
-        
+
         /*
          * A packet can actually contain multiple sets of samples (or frames of samples
          * in audio-decoding speak).  So, we may need to call decode audio multiple
          * times at different offsets in the packet's data.  We capture that here.
          */
         int offset = 0;
-        
+
         /*
          * Keep going until we've processed all data
          */
@@ -279,12 +279,12 @@ public class DecodeAndPlayAudioAndVideo
         /*
          * This packet isn't part of our video stream, so we just silently drop it.
          */
-        do {} while(false);
+        continue;
       }
-      
+
     }
     /*
-     * Technically since we're exiting anyway, these will be cleaned up by 
+     * Technically since we're exiting anyway, these will be cleaned up by
      * the garbage collector... but because we're nice people and want
      * to be invited places for Christmas, we're going to show how to clean up.
      */
@@ -298,11 +298,9 @@ public class DecodeAndPlayAudioAndVideo
       audioCoder.close();
       audioCoder = null;
     }
-    if (container !=null)
-    {
-      container.close();
-      container = null;
-    }
+    container.close();
+    container = null;
+
     closeJavaSound();
     closeJavaVideo();
   }
@@ -312,11 +310,11 @@ public class DecodeAndPlayAudioAndVideo
     /**
      * We could just display the images as quickly as we decode them, but it turns
      * out we can decode a lot faster than you think.
-     * 
+     *
      * So instead, the following code does a poor-man's version of trying to
      * match up the frame-rate requested for each IVideoPicture with the system
      * clock time on your computer.
-     * 
+     *
      * Remember that all Xuggler IAudioSamples and IVideoPicture objects always
      * give timestamps in Microseconds, relative to the first decoded item.  If
      * instead you used the packet timestamps, they can be in different units depending
@@ -379,8 +377,8 @@ public class DecodeAndPlayAudioAndVideo
      * And if that succeed, start the line.
      */
     mLine.start();
-    
-    
+
+
   }
 
   private static void playJavaSound(IAudioSamples aSamples)

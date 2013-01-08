@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2008, 2010 Xuggle Inc.  All rights reserved.
- *  
+ *
  * This file is part of Xuggle-Xuggler-Main.
  *
  * Xuggle-Xuggler-Main is free software: you can redistribute it and/or modify
@@ -50,26 +50,26 @@ public class DecodeAndPlayAudio
   /**
    * Takes a media container (file) as the first argument, opens it,
    * opens up the default audio device on your system, and plays back the audio.
-   *  
+   *
    * @param args Must contain one string which represents a filename
    */
   public static void main(String[] args)
   {
     if (args.length <= 0)
       throw new IllegalArgumentException("must pass in a filename as the first argument");
-    
+
     String filename = args[0];
-    
+
     // Create a Xuggler container object
     IContainer container = IContainer.make();
-    
+
     // Open up the container
     if (container.open(filename, IContainer.Type.READ, null) < 0)
       throw new IllegalArgumentException("could not open file: " + filename);
-    
+
     // query how many streams the call to open found
     int numStreams = container.getNumStreams();
-    
+
     // and iterate through the streams to find the first audio stream
     int audioStreamId = -1;
     IStreamCoder audioCoder = null;
@@ -79,7 +79,7 @@ public class DecodeAndPlayAudio
       IStream stream = container.getStream(i);
       // Get the pre-configured decoder that can decode this stream;
       IStreamCoder coder = stream.getStreamCoder();
-      
+
       if (coder.getCodecType() == ICodec.Type.CODEC_TYPE_AUDIO)
       {
         audioStreamId = i;
@@ -89,19 +89,19 @@ public class DecodeAndPlayAudio
     }
     if (audioStreamId == -1)
       throw new RuntimeException("could not find audio stream in container: "+filename);
-    
+
     /*
      * Now we have found the audio stream in this file.  Let's open up our decoder so it can
      * do work.
      */
     if (audioCoder.open(null, null) < 0)
       throw new RuntimeException("could not open audio decoder for container: "+filename);
-    
+
     /*
      * And once we have that, we ask the Java Sound System to get itself ready.
      */
     openJavaSound(audioCoder);
-    
+
     /*
      * Now, we start walking through the container looking at each packet.
      */
@@ -111,70 +111,61 @@ public class DecodeAndPlayAudio
       /*
        * Now we have a packet, let's see if it belongs to our audio stream
        */
-      if (packet.getStreamIndex() == audioStreamId)
-      {
-        /*
-         * We allocate a set of samples with the same number of channels as the
-         * coder tells us is in this buffer.
-         * 
-         * We also pass in a buffer size (1024 in our example), although Xuggler
-         * will probably allocate more space than just the 1024 (it's not important why).
-         */
-        IAudioSamples samples = IAudioSamples.make(1024, audioCoder.getChannels());
-        
-        /*
-         * A packet can actually contain multiple sets of samples (or frames of samples
-         * in audio-decoding speak).  So, we may need to call decode audio multiple
-         * times at different offsets in the packet's data.  We capture that here.
-         */
-        int offset = 0;
-        
-        /*
-         * Keep going until we've processed all data
-         */
-        while(offset < packet.getSize())
-        {
-          int bytesDecoded = audioCoder.decodeAudio(samples, packet, offset);
-          if (bytesDecoded < 0)
-            throw new RuntimeException("got error decoding audio in: " + filename);
-          offset += bytesDecoded;
-          /*
-           * Some decoder will consume data in a packet, but will not be able to construct
-           * a full set of samples yet.  Therefore you should always check if you
-           * got a complete set of samples from the decoder
-           */
-          if (samples.isComplete())
-          {
-            playJavaSound(samples);
-          }
-        }
-      }
-      else
+      if (packet.getStreamIndex() != audioStreamId)
       {
         /*
          * This packet isn't part of our audio stream, so we just silently drop it.
          */
-        do {} while(false);
+        continue;
       }
-      
+
+      /*
+       * We allocate a set of samples with the same number of channels as the
+       * coder tells us is in this buffer.
+       *
+       * We also pass in a buffer size (1024 in our example), although Xuggler
+       * will probably allocate more space than just the 1024 (it's not important why).
+       */
+      IAudioSamples samples = IAudioSamples.make(1024, audioCoder.getChannels());
+
+      /*
+       * A packet can actually contain multiple sets of samples (or frames of samples
+       * in audio-decoding speak).  So, we may need to call decode audio multiple
+       * times at different offsets in the packet's data.  We capture that here.
+       */
+      int offset = 0;
+
+      /*
+       * Keep going until we've processed all data
+       */
+      while(offset < packet.getSize())
+      {
+        int bytesDecoded = audioCoder.decodeAudio(samples, packet, offset);
+        if (bytesDecoded < 0)
+          throw new RuntimeException("got error decoding audio in: " + filename);
+        offset += bytesDecoded;
+        /*
+         * Some decoder will consume data in a packet, but will not be able to construct
+         * a full set of samples yet.  Therefore you should always check if you
+         * got a complete set of samples from the decoder
+         */
+        if (samples.isComplete())
+        {
+          playJavaSound(samples);
+        }
+      }
     }
     /*
-     * Technically since we're exiting anyway, these will be cleaned up by 
+     * Technically since we're exiting anyway, these will be cleaned up by
      * the garbage collector... but because we're nice people and want
      * to be invited places for Christmas, we're going to show how to clean up.
      */
+    audioCoder.close();
+    audioCoder = null;
+    container.close();
+    container = null;
+
     closeJavaSound();
-    
-    if (audioCoder != null)
-    {
-      audioCoder.close();
-      audioCoder = null;
-    }
-    if (container !=null)
-    {
-      container.close();
-      container = null;
-    }
   }
 
   private static void openJavaSound(IStreamCoder aAudioCoder)
@@ -201,8 +192,8 @@ public class DecodeAndPlayAudio
     {
       throw new RuntimeException("could not open audio line");
     }
-    
-    
+
+
   }
 
   private static void playJavaSound(IAudioSamples aSamples)
