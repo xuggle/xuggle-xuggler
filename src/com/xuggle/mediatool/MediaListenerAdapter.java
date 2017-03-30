@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2008, 2010 Xuggle Inc.  All rights reserved.
- *  
+ *
  * This file is part of Xuggle-Xuggler-Main.
  *
  * Xuggle-Xuggler-Main is free software: you can redistribute it and/or modify
@@ -35,15 +35,15 @@ import com.xuggle.mediatool.event.IWriteTrailerEvent;
 
 
 /**
- * An implementation of {@link IMediaListener} that 
+ * An implementation of {@link IMediaListener} that
  * implements all methods as empty methods.
- * 
+ *
  * <p>
- * 
+ *
  * This can be useful if you only want to override some members of
  * {@link IMediaListener}; instead, just subclass this and override the methods
  * you want, rather than providing an implementation of all methods.
- * 
+ *
  * </p>
  */
 
@@ -57,12 +57,11 @@ extends AMediaListenerMixin implements IMediaListener
   {
     super();
   }
-  
+
   /** {@inheritDoc} */
 
   public void onVideoPicture(IVideoPictureEvent event)
   {
-    do {} while(false);
     super.onVideoPicture(event);
   }
 
@@ -70,7 +69,6 @@ extends AMediaListenerMixin implements IMediaListener
 
   public void onAudioSamples(IAudioSamplesEvent event)
   {
-    do {} while(false);
     super.onAudioSamples(event);
   }
 
@@ -78,7 +76,6 @@ extends AMediaListenerMixin implements IMediaListener
 
   public void onOpen(IOpenEvent event)
   {
-    do {} while(false);
     super.onOpen(event);
   }
 
@@ -86,7 +83,6 @@ extends AMediaListenerMixin implements IMediaListener
 
   public void onClose(ICloseEvent event)
   {
-    do {} while(false);
     super.onClose(event);
   }
 
@@ -94,7 +90,6 @@ extends AMediaListenerMixin implements IMediaListener
 
   public void onAddStream(IAddStreamEvent event)
   {
-    do {} while(false);
     super.onAddStream(event);
   }
 
@@ -102,7 +97,6 @@ extends AMediaListenerMixin implements IMediaListener
 
   public void onOpenCoder(IOpenCoderEvent event)
   {
-    do {} while(false);
     super.onOpenCoder(event);
   }
 
@@ -110,7 +104,6 @@ extends AMediaListenerMixin implements IMediaListener
 
   public void onCloseCoder(ICloseCoderEvent event)
   {
-    do {} while(false);
     super.onCloseCoder(event);
   }
 
@@ -118,7 +111,6 @@ extends AMediaListenerMixin implements IMediaListener
 
   public void onReadPacket(IReadPacketEvent event)
   {
-    do {} while(false);
     super.onReadPacket(event);
   }
 
@@ -126,7 +118,6 @@ extends AMediaListenerMixin implements IMediaListener
 
   public void onWritePacket(IWritePacketEvent event)
   {
-    do {} while(false);
     super.onWritePacket(event);
   }
 
@@ -134,7 +125,6 @@ extends AMediaListenerMixin implements IMediaListener
 
   public void onWriteHeader(IWriteHeaderEvent event)
   {
-    do {} while(false);
     super.onWriteHeader(event);
   }
 
@@ -142,7 +132,6 @@ extends AMediaListenerMixin implements IMediaListener
 
   public void onFlush(IFlushEvent event)
   {
-    do {} while(false);
     super.onFlush(event);
   }
 
@@ -150,7 +139,6 @@ extends AMediaListenerMixin implements IMediaListener
 
   public void onWriteTrailer(IWriteTrailerEvent event)
   {
-    do {} while(false);
     super.onWriteTrailer(event);
   }
 }

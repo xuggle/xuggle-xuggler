@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2008, 2010 Xuggle Inc.  All rights reserved.
- *  
+ *
  * This file is part of Xuggle-Xuggler-Main.
  *
  * Xuggle-Xuggler-Main is free software: you can redistribute it and/or modify
@@ -38,12 +38,12 @@ import com.xuggle.mediatool.event.IWriteTrailerEvent;
  * forwards all {@link IMediaListener} events to
  * listeners registered with {@link #addListener(IMediaListener)}.
  * <p>
- * Forwards every call on the {@link IMediaListener} interface methods to all 
+ * Forwards every call on the {@link IMediaListener} interface methods to all
  * listeners added on the {@link IMediaGenerator} interface, and
  * declares its support of the {@link IMediaTool} interface.
  * </p>
  * <p>
- * This can be useful if you want to implement your own 
+ * This can be useful if you want to implement your own
  * {@link IMediaTool}, want help implementing the
  * {@link IMediaListener} call backs, and want your parent
  * class to declare support for the {@link IMediaTool} interface.
@@ -66,7 +66,6 @@ implements IMediaTool
    */
   public boolean addListener(IMediaListener listener)
   {
-    do {} while(false);
     return super.addListener(listener);
   }
 
@@ -75,7 +74,6 @@ implements IMediaTool
    */
   public Collection<IMediaListener> getListeners()
   {
-    do {} while(false);
     return super.getListeners();
   }
 
@@ -84,7 +82,6 @@ implements IMediaTool
    */
   public boolean removeListener(IMediaListener listener)
   {
-    do {} while(false);
     return super.removeListener(listener);
   }
 
@@ -93,7 +90,6 @@ implements IMediaTool
    */
   public void onAddStream(IAddStreamEvent event)
   {
-    do {} while(false);
     super.onAddStream(event);
   }
 
@@ -102,7 +98,6 @@ implements IMediaTool
    */
   public void onAudioSamples(IAudioSamplesEvent event)
   {
-    do {} while(false);
     super.onAudioSamples(event);
   }
 
@@ -111,7 +106,6 @@ implements IMediaTool
    */
   public void onClose(ICloseEvent event)
   {
-    do {} while(false);
     super.onClose(event);
   }
 
@@ -120,7 +114,6 @@ implements IMediaTool
    */
   public void onCloseCoder(ICloseCoderEvent event)
   {
-    do {} while(false);
     super.onCloseCoder(event);
   }
 
@@ -129,7 +122,6 @@ implements IMediaTool
    */
   public void onFlush(IFlushEvent event)
   {
-    do {} while(false);
     super.onFlush(event);
   }
 
@@ -138,7 +130,6 @@ implements IMediaTool
    */
   public void onOpen(IOpenEvent event)
   {
-    do {} while(false);
     super.onOpen(event);
   }
 
@@ -147,7 +138,6 @@ implements IMediaTool
    */
   public void onOpenCoder(IOpenCoderEvent event)
   {
-    do {} while(false);
     super.onOpenCoder(event);
   }
 
@@ -156,8 +146,7 @@ implements IMediaTool
    */
   public void onReadPacket(IReadPacketEvent event)
   {
-    do {} while(false);
-    super.onReadPacket(event); 
+    super.onReadPacket(event);
   }
 
   /**
@@ -165,7 +154,6 @@ implements IMediaTool
    */
   public void onVideoPicture(IVideoPictureEvent event)
   {
-    do {} while(false);
     super.onVideoPicture(event);
   }
 
@@ -174,7 +162,6 @@ implements IMediaTool
    */
   public void onWriteHeader(IWriteHeaderEvent event)
   {
-    do {} while(false);
     super.onWriteHeader(event);
   }
 
@@ -183,8 +170,7 @@ implements IMediaTool
    */
   public void onWritePacket(IWritePacketEvent event)
   {
-    do {} while(false);
-    super.onWritePacket(event); 
+    super.onWritePacket(event);
   }
 
   /**
@@ -192,7 +178,6 @@ implements IMediaTool
    */
   public void onWriteTrailer(IWriteTrailerEvent event)
   {
-    do {} while(false);
     super.onWriteTrailer(event);
   }
 

@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2008, 2010 Xuggle Inc.  All rights reserved.
- *  
+ *
  * This file is part of Xuggle-Xuggler-Main.
  *
  * Xuggle-Xuggler-Main is free software: you can redistribute it and/or modify
@@ -76,13 +76,13 @@ public class DisplayWebcamVideo
    *  </tr>
    *  </tbody>
    *  </table>
-   * 
+   *
    * <p>
    * Webcam support is very limited; you can't query what devices are
    * available, nor can you query what their capabilities are without
    * actually opening the device.  Sorry, but that's how FFMPEG rolls.
    * </p>
-   * 
+   *
    * @param args Must contain two strings: a FFMPEG driver name and a device name
    *   (which is dependent on the FFMPEG driver).
    */
@@ -112,9 +112,9 @@ public class DisplayWebcamVideo
     // parameters make sense
 
     IMetaData params = IMetaData.make();
-    
+
     params.setValue("framerate", "30/1");
-    params.setValue("video_size", "320x240");    
+    params.setValue("video_size", "320x240");
 
     // Open up the container
     int retval = container.open(deviceName, IContainer.Type.READ, format,
@@ -125,7 +125,7 @@ public class DisplayWebcamVideo
       // a slightly more friendly object to get a human-readable error name
       IError error = IError.make(retval);
       throw new IllegalArgumentException("could not open file: " + deviceName + "; Error: " + error.getDescription());
-    }      
+    }
 
     // query how many streams the call to open found
     int numStreams = container.getNumStreams();
@@ -181,87 +181,77 @@ public class DisplayWebcamVideo
       /*
        * Now we have a packet, let's see if it belongs to our video stream
        */
-      if (packet.getStreamIndex() == videoStreamId)
-      {
-        /*
-         * We allocate a new picture to get the data out of Xuggler
-         */
-        IVideoPicture picture = IVideoPicture.make(videoCoder.getPixelType(),
-            videoCoder.getWidth(), videoCoder.getHeight());
-
-        int offset = 0;
-        while(offset < packet.getSize())
-        {
-          /*
-           * Now, we decode the video, checking for any errors.
-           * 
-           */
-          int bytesDecoded = videoCoder.decodeVideo(picture, packet, offset);
-          if (bytesDecoded < 0)
-            throw new RuntimeException("got error decoding video in: " + deviceName);
-          offset += bytesDecoded;
-
-          /*
-           * Some decoders will consume data in a packet, but will not be able to construct
-           * a full video picture yet.  Therefore you should always check if you
-           * got a complete picture from the decoder
-           */
-          if (picture.isComplete())
-          {
-            IVideoPicture newPic = picture;
-            /*
-             * If the resampler is not null, that means we didn't get the video in BGR24 format and
-             * need to convert it into BGR24 format.
-             */
-            if (resampler != null)
-            {
-              // we must resample
-              newPic = IVideoPicture.make(resampler.getOutputPixelFormat(), picture.getWidth(), picture.getHeight());
-              if (resampler.resample(newPic, picture) < 0)
-                throw new RuntimeException("could not resample video from: " + deviceName);
-            }
-            if (newPic.getPixelType() != IPixelFormat.Type.BGR24)
-              throw new RuntimeException("could not decode video as BGR 24 bit data in: " + deviceName);
-
-            // Convert the BGR24 to an Java buffered image
-            BufferedImage javaImage = Utils.videoPictureToImage(newPic);
-
-            // and display it on the Java Swing window
-            updateJavaWindow(javaImage);
-          }
-        }
-      }
-      else
+      if (packet.getStreamIndex() != videoStreamId)
       {
         /*
          * This packet isn't part of our video stream, so we just silently drop it.
          */
-        do {} while(false);
+        continue;
       }
 
+      /*
+       * We allocate a new picture to get the data out of Xuggler
+       */
+      IVideoPicture picture = IVideoPicture.make(videoCoder.getPixelType(),
+          videoCoder.getWidth(), videoCoder.getHeight());
+
+      int offset = 0;
+      while(offset < packet.getSize())
+      {
+        /*
+         * Now, we decode the video, checking for any errors.
+         *
+         */
+        int bytesDecoded = videoCoder.decodeVideo(picture, packet, offset);
+        if (bytesDecoded < 0)
+          throw new RuntimeException("got error decoding video in: " + deviceName);
+        offset += bytesDecoded;
+
+        /*
+         * Some decoders will consume data in a packet, but will not be able to construct
+         * a full video picture yet.  Therefore you should always check if you
+         * got a complete picture from the decoder
+         */
+        if (picture.isComplete())
+        {
+          IVideoPicture newPic = picture;
+          /*
+           * If the resampler is not null, that means we didn't get the video in BGR24 format and
+           * need to convert it into BGR24 format.
+           */
+          if (resampler != null)
+          {
+            // we must resample
+            newPic = IVideoPicture.make(resampler.getOutputPixelFormat(), picture.getWidth(), picture.getHeight());
+            if (resampler.resample(newPic, picture) < 0)
+              throw new RuntimeException("could not resample video from: " + deviceName);
+          }
+          if (newPic.getPixelType() != IPixelFormat.Type.BGR24)
+            throw new RuntimeException("could not decode video as BGR 24 bit data in: " + deviceName);
+
+          // Convert the BGR24 to an Java buffered image
+          BufferedImage javaImage = Utils.videoPictureToImage(newPic);
+
+          // and display it on the Java Swing window
+          updateJavaWindow(javaImage);
+        }
+      }
     }
     /*
-     * Technically since we're exiting anyway, these will be cleaned up by 
+     * Technically since we're exiting anyway, these will be cleaned up by
      * the garbage collector... but because we're nice people and want
      * to be invited places for Christmas, we're going to show how to clean up.
      */
-    if (videoCoder != null)
-    {
-      videoCoder.close();
-      videoCoder = null;
-    }
-    if (container !=null)
-    {
-      container.close();
-      container = null;
-    }
+    videoCoder.close();
+    videoCoder = null;
+    container.close();
+    container = null;
     closeJavaWindow();
-
   }
 
   /**
    * The window we'll draw the video on.
-   * 
+   *
    */
   private static VideoImage mScreen = null;
 

@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2008, 2010 Xuggle Inc.  All rights reserved.
- *  
+ *
  * This file is part of Xuggle-Xuggler-Main.
  *
  * Xuggle-Xuggler-Main is free software: you can redistribute it and/or modify
@@ -33,10 +33,10 @@ import java.util.Collection;
  * {@link IMediaGenerator}, but want someone to declare support for it, and
  * implement the interface.
  * </p>
- * 
+ *
  * @author trebor
  * @author aclarke
- * 
+ *
  */
 public class MediaGeneratorAdapter extends AMediaGeneratorMixin implements
     IMediaGenerator
@@ -60,7 +60,6 @@ public class MediaGeneratorAdapter extends AMediaGeneratorMixin implements
    */
   public boolean addListener(IMediaListener listener)
   {
-    do {} while(false);
     return super.addListener(listener);
   }
 
@@ -69,7 +68,6 @@ public class MediaGeneratorAdapter extends AMediaGeneratorMixin implements
    */
   public Collection<IMediaListener> getListeners()
   {
-    do {} while(false);
     return super.getListeners();
   }
 
@@ -78,7 +76,6 @@ public class MediaGeneratorAdapter extends AMediaGeneratorMixin implements
    */
   public boolean removeListener(IMediaListener listener)
   {
-    do {} while(false);
     return super.removeListener(listener);
   }
 
