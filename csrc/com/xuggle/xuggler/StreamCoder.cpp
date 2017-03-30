@@ -865,10 +865,6 @@ StreamCoder::decodeAudio(IAudioSamples *pOutSamples, IPacket *pPacket,
     VS_LOG_WARN("Attempting to decode when not ready; no samples");
     return retval;
   }
-  if (!packet) {
-    VS_LOG_WARN("Attempting to decode when not ready; no packet");
-    return retval;
-  }
   if (!mOpened) {
     VS_LOG_WARN("Attempting to decode when not ready; codec not opened");
     return retval;
@@ -898,23 +894,25 @@ StreamCoder::decodeAudio(IAudioSamples *pOutSamples, IPacket *pPacket,
   // to be at least this long.
   samples->ensureCapacity(AVCODEC_MAX_AUDIO_FRAME_SIZE);
   outBufSize = samples->getMaxBufferSize();
-  inBufSize = packet->getSize() - startingByte;
+  inBufSize = packet ? packet->getSize() - startingByte : 0;
 
-  if (inBufSize > 0 && outBufSize > 0)
+  if ( outBufSize > 0)
   {
-    RefPointer<IBuffer> buffer = packet->getData();
     uint8_t * inBuf = 0;
     int16_t * outBuf = 0;
+	int64_t packetTs = Global::NO_PTS;
 
-    VS_ASSERT(buffer, "no buffer in packet!");
-    if (buffer)
-      inBuf = (uint8_t*) buffer->getBytes(startingByte, inBufSize);
-
+    if (packet) {
+      RefPointer<IBuffer> buffer = packet->getData();
+      VS_ASSERT(buffer, "no buffer in packet!");
+      if (buffer)
+        inBuf = (uint8_t*) buffer->getBytes(startingByte, inBufSize);
+    }
+	
     outBuf = samples->getRawSamples(0);
 
-    VS_ASSERT(inBuf, "no in buffer");
     VS_ASSERT(outBuf, "no out buffer");
-    if (outBuf && inBuf)
+    if (outBuf)
     {
       VS_LOG_TRACE("Attempting decodeAudio(%p, %p, %d, %p, %d);",
           mCodecContext,
@@ -930,7 +928,7 @@ StreamCoder::decodeAudio(IAudioSamples *pOutSamples, IPacket *pPacket,
       pkt.data = inBuf;
       pkt.size = inBufSize;
 
-      mCodecContext->reordered_opaque = packet->getPts();
+      if (packet) mCodecContext->reordered_opaque = packet->getPts();
 
       {
         AVFrame frame;
@@ -939,6 +937,9 @@ StreamCoder::decodeAudio(IAudioSamples *pOutSamples, IPacket *pPacket,
         avcodec_get_frame_defaults(&frame);
 
         retval = avcodec_decode_audio4(mCodecContext, &frame, &got_frame, &pkt);
+
+        if (!got_frame) outBufSize = 0;
+
         // the API for decoding audio changed ot support planar audio and we
         // need to back-port
         if (retval >= 0 && got_frame) {
@@ -949,6 +950,7 @@ StreamCoder::decodeAudio(IAudioSamples *pOutSamples, IPacket *pPacket,
             frame.nb_samples,
             mCodecContext->sample_fmt,
             1);
+		  packetTs=frame.reordered_opaque;
           if (outBufSize < data_size) {
             VS_LOG_ERROR("Output buffer is not large enough; no audio actually returned");
             outBufSize = 0;
@@ -992,8 +994,9 @@ StreamCoder::decodeAudio(IAudioSamples *pOutSamples, IPacket *pPacket,
       if (!timeBase)
         timeBase = this->getTimeBase();
 
-      int64_t packetTs = packet->getPts();
-      if (packetTs == Global::NO_PTS)
+      if (packetTs == Global::NO_PTS && packet)
+		packetTs = packet->getPts();
+      if (packetTs == Global::NO_PTS && packet)
         packetTs = packet->getDts();
 
       if (packetTs == Global::NO_PTS && mFakeNextPts == Global::NO_PTS)
@@ -1080,10 +1083,6 @@ StreamCoder::decodeVideo(IVideoPicture *pOutFrame, IPacket *pPacket,
     VS_LOG_WARN("Attempting to decode when not ready; no frame");
     return retval;
   }
-  if (!packet) {
-    VS_LOG_WARN("Attempting to decode when not ready; no packet");
-    return retval;
-  }
   if (!mOpened) {
     VS_LOG_WARN("Attempting to decode when not ready; codec not opened");
     return retval;
@@ -1108,20 +1107,21 @@ StreamCoder::decodeVideo(IVideoPicture *pOutFrame, IPacket *pPacket,
   AVFrame *avFrame = avcodec_alloc_frame();
   if (avFrame)
   {
-    RefPointer<IBuffer> buffer = packet->getData();
     int frameFinished = 0;
     int32_t inBufSize = 0;
     uint8_t * inBuf = 0;
 
-    inBufSize = packet->getSize() - byteOffset;
+    if (packet) {
+      RefPointer<IBuffer> buffer = packet->getData();
+      inBufSize = packet->getSize() - byteOffset;
 
-    VS_ASSERT(buffer, "no buffer in packet?");
-    if (buffer)
-      inBuf = (uint8_t*) buffer->getBytes(byteOffset, inBufSize);
+      VS_ASSERT(buffer, "no buffer in packet?");
+      if (buffer)
+        inBuf = (uint8_t*) buffer->getBytes(byteOffset, inBufSize);
 
-    VS_ASSERT(inBuf, "incorrect size or no data in packet");
+      VS_ASSERT(inBuf, "incorrect size or no data in packet");
+    }
 
-    if (inBufSize > 0 && inBuf)
     {
       VS_LOG_TRACE("Attempting decodeVideo(%p, %p, %d, %p, %d);",
           mCodecContext,
@@ -1137,7 +1137,8 @@ StreamCoder::decodeVideo(IVideoPicture *pOutFrame, IPacket *pPacket,
       pkt.data = inBuf;
       pkt.size = inBufSize;
 
-      mCodecContext->reordered_opaque = packet->getPts();
+      if (packet) 
+        mCodecContext->reordered_opaque = packet->getPts();
       retval = avcodec_decode_video2(mCodecContext, avFrame, &frameFinished,
           &pkt);
       VS_LOG_TRACE("Finished %d decodeVideo(%p, %p, %d, %p, %d);",
@@ -1161,7 +1162,7 @@ StreamCoder::decodeVideo(IVideoPicture *pOutFrame, IPacket *pPacket,
         int64_t packetTs = avFrame->reordered_opaque;
         // if none, assume this packet's decode time, since
         // it's presentation time should have been in reordered_opaque
-        if (packetTs == Global::NO_PTS)
+        if (packet && packetTs == Global::NO_PTS)
           packetTs = packet->getDts();
 
         if (packetTs != Global::NO_PTS)
@@ -1177,7 +1178,7 @@ StreamCoder::decodeVideo(IVideoPicture *pOutFrame, IPacket *pPacket,
             // See: http://code.google.com/p/xuggle/issues/detail?id=165
             // in this way we enforce that timestamps are always
             // increasing
-            if (nextPts < mFakeNextPts && packet->getPts() != Global::NO_PTS)
+            if (packet && nextPts < mFakeNextPts && packet->getPts() != Global::NO_PTS)
               nextPts = mFakePtsTimeBase->rescale(packet->getPts(),
                   timeBase.value());
             mFakeNextPts = nextPts;
